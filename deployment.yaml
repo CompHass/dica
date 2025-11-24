@@ -69,10 +69,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - dica.hasslab.tech
+    - dica.hasslab.pro
     secretName: dica-tls
   rules:
-  - host: dica.hasslab.tech
+  - host: dica.hasslab.pro
     http:
       paths:
       - path: /
