@@ -7,65 +7,79 @@ function ResultScreen({ answers, onReset }) {
     return types[0];
   };
   
-  const [dominantType, score] = getHighestType();
-  
-  // Calcular total de questões respondidas
+  const [dominantType] = getHighestType();
   const totalAnswers = Object.values(answers).reduce((sum, value) => sum + value, 0);
   
   const descriptions = {
     D: {
       title: "DOMINADOR",
-      description: "Você tem uma personalidade dominante, assertiva e orientada para resultados. Gosta de liderar, tomar decisões rápidas e buscar desafios. É direto, competitivo e focado em atingir objetivos."
+      colorClass: "type-d",
+      description: "Você tem uma personalidade dominante, assertiva e orientada para resultados. Gosta de liderar, tomar decisões rápidas e buscar desafios."
     },
     I: {
       title: "INTENSO",
-      description: "Você tem uma personalidade expressiva, entusiasta e social. Gosta de interagir com pessoas, é otimista, persuasivo e espontâneo. É criativo, comunicativo e busca ambientes dinâmicos."
+      colorClass: "type-i",
+      description: "Você tem uma personalidade expressiva, entusiasta e social. Gosta de interagir com pessoas, é otimista, persuasivo e espontâneo."
     },
     C: {
       title: "CONTROLADOR",
-      description: "Você tem uma personalidade analítica, detalhista e precisa. Valoriza a qualidade, é metódico e busca perfeição. Prefere ambientes estruturados, seguir regras e evitar riscos."
+      colorClass: "type-c",
+      description: "Você tem uma personalidade analítica, detalhista e precisa. Valoriza a qualidade, é metódico e busca perfeição."
     },
     A: {
       title: "AMOROSO",
-      description: "Você tem uma personalidade estável, paciente e confiável. É um bom ouvinte, leal e busca harmonia. Valoriza relacionamentos estáveis, segurança e prefere ambientes previsíveis."
+      colorClass: "type-a",
+      description: "Você tem uma personalidade estável, paciente e confiável. É um bom ouvinte, leal e busca harmonia."
     }
   };
 
   return (
     <div className="result-container">
-      <h2>Seu resultado</h2>
-      <div className="result-card">
-        <h3>Seu perfil predominante é:</h3>
-        <div className="dominant-type">
+      <div className="result-header">
+        <span className="result-eyebrow">Seu Perfil Principal</span>
+        <h2 className={`dominant-type-name ${descriptions[dominantType].colorClass}`}>
           {descriptions[dominantType].title}
-        </div>
-        <div className="type-description">
+        </h2>
+      </div>
+
+      <div className="glass-card result-card-content">
+        <p className="result-description">
           {descriptions[dominantType].description}
-        </div>
+        </p>
         
-        <div className="scores">
-          <h4>Distribuição do seu perfil:</h4>
-          <div className="score-bars">
-            {Object.entries(answers).map(([type, value]) => (
-              <div key={type} className="score-item">
-                <div className="score-label">{descriptions[type].title}</div>
-                <div className="score-bar-container">
+        <div className="stats-container">
+          <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>
+            Distribuição de Perfil
+          </h4>
+          {Object.entries(answers).map(([type, value]) => {
+            const percentage = (value / totalAnswers) * 100;
+            return (
+              <div key={type} className="stat-row">
+                <div className="stat-label-row">
+                  <span>{descriptions[type].title}</span>
+                  <span>{Math.round(percentage)}%</span>
+                </div>
+                <div className="stat-bar-bg">
                   <div 
-                    className="score-bar" 
+                    className={`stat-bar-fill ${descriptions[type].colorClass}`} 
                     style={{ 
-                      width: `${(value / totalAnswers) * 100}%`, // Usando totalAnswers calculado acima
-                      backgroundColor: type === dominantType ? '#4CAF50' : '#ddd'
+                      width: `${percentage}%`,
+                      backgroundColor: `var(--color-${type.toLowerCase()})`
                     }}
                   ></div>
                 </div>
-                <div className="score-value">{value}</div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
-      <button className="reset-button" onClick={onReset}>
-        Fazer o teste novamente
+
+      <button className="primary-button" onClick={onReset} style={{ margin: '0 auto' }}>
+        Refazer Avaliação
+      </button>
+      
+      <button className="secondary-button" onClick={() => window.print()} style={{ maxWidth: '280px', margin: '0 auto' }}>
+        Exportar PDF
       </button>
     </div>
   );
