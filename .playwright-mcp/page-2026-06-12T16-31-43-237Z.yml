@@ -1,0 +1,10 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e6]
+      - generic [ref=e11]: Perfil Comportamental
+  - generic [ref=e13]:
+    - heading "Bem-vindo ao seu Questionário de Perfil Comportamental." [level=1] [ref=e14]
+    - paragraph [ref=e15]: Descubra seus pontos fortes e padrões de comportamento em poucos minutos. Este teste foi projetado para fornecer insights valiosos sobre sua personalidade profissional e pessoal.
+    - button "Iniciar Avaliação" [ref=e16] [cursor=pointer]
+    - generic [ref=e17]: "Tempo estimado: 10 minutos | 24 questões"

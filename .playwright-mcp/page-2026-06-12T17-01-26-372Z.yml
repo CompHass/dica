@@ -1,0 +1,23 @@
+- generic [ref=e19]:
+  - banner [ref=e20]:
+    - generic [ref=e21]:
+      - img [ref=e22]
+      - generic [ref=e28]: Perfil Comportamental
+    - generic [ref=e29]: Questionário
+  - main [ref=e30]:
+    - generic [ref=e34]:
+      - paragraph [ref=e35]: Questão 1 de 24
+      - heading "Escolha a palavra que melhor descreve você:" [level=2] [ref=e36]
+      - generic [ref=e37]:
+        - button "Enérgico" [ref=e38] [cursor=pointer]:
+          - img [ref=e40]
+          - generic [ref=e42]: Enérgico
+        - button "Expressivo" [ref=e43] [cursor=pointer]:
+          - img [ref=e45]
+          - generic [ref=e47]: Expressivo
+        - button "Cuidadoso" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e52]: Cuidadoso
+        - button "Controlado" [ref=e53] [cursor=pointer]:
+          - img [ref=e55]
+          - generic [ref=e58]: Controlado

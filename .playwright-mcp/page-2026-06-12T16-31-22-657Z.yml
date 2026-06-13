@@ -1,0 +1,32 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - region "Notifications Alt+T"
+    - main [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - img "Reditus One Logo" [ref=e9]
+          - generic [ref=e10]:
+            - generic [ref=e11]:
+              - generic [ref=e12]:
+                - text: Username
+                - generic [ref=e13]: "*"
+              - generic [ref=e14]:
+                - textbox "Username" [ref=e15]:
+                  - /placeholder: Enter your username
+                - group:
+                  - generic: Username *
+            - generic [ref=e16]:
+              - generic [ref=e17]:
+                - text: Password
+                - generic [ref=e18]: "*"
+              - generic [ref=e19]:
+                - textbox "Password" [ref=e20]:
+                  - /placeholder: Enter your password
+                - group:
+                  - generic: Password *
+            - link "Forgot your password?" [ref=e21] [cursor=pointer]:
+              - /url: "#"
+            - button "Log in" [ref=e22] [cursor=pointer]
+            - paragraph [ref=e23]: Can't access your account? Contact our support team!
+        - img "Reditus illustration" [ref=e26]
+  - alert [ref=e27]: Login - Reditus

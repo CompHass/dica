@@ -1,0 +1,13 @@
+[      90ms] [LOG] [HMR] Waiting for update signal from WDS... @ http://localhost:3001/static/js/0.chunk.js:38491
+[      96ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:3001/static/js/0.chunk.js:30609
+[   48553ms] ReferenceError: process is not defined
+    at 4043 (<anonymous>:2:13175)
+    at r (<anonymous>:2:306606)
+    at 8048 (<anonymous>:2:9504)
+    at r (<anonymous>:2:306606)
+    at 8641 (<anonymous>:2:1379)
+    at r (<anonymous>:2:306606)
+    at <anonymous>:2:315634
+    at <anonymous>:2:324254
+    at <anonymous>:2:324258
+    at e.onload (http://localhost:3001/static/js/0.chunk.js:32429:324874)

@@ -1,0 +1,21 @@
+{
+  "name": "DICA - Perfil Comportamental",
+  "short_name": "DICA",
+  "description": "Ferramenta de avaliação de perfil comportamental moderna e intuitiva.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a2b3c",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
