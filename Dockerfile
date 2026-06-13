@@ -1,17 +1,18 @@
 FROM node:18-alpine AS build
 
-ENV NODE_OPTIONS=--openssl-legacy-provider
-
 WORKDIR /app
 
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
 COPY package*.json ./
-RUN npm install || { echo 'Install failed'; exit 1; }
+RUN npm ci --legacy-peer-deps
 
 COPY . .
-RUN ls -la /app/src
-RUN npm run build || { echo 'Build failed'; exit 1; } 
+RUN npm run build
 
 FROM nginx:alpine
+
+RUN apk upgrade --no-cache
 
 COPY --from=build /app/build /usr/share/nginx/html
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
