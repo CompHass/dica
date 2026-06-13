@@ -1,59 +1,68 @@
-import React from 'react';
-import { Logo } from './Logo';
+import React, { useState, useEffect } from 'react';
 
-const icons = {
-  D: (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#006ef9" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
-    </svg>
-  ),
-  I: (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#006ef9" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 4H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3l3 3 3-3h3a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
-    </svg>
-  ),
-  C: (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#006ef9" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-  ),
-  A: (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#006ef9" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-    </svg>
-  ),
-};
+const DISC_LABELS = { D: 'D', I: 'I', C: 'C', A: 'A' };
 
-function QuestionScreen({ question, onAnswer, progress, questionNumber, totalQuestions }) {
+function QuestionScreen({ question, onAnswer, onPrevious, progress, questionNumber, totalQuestions }) {
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => { setSelected(null); }, [questionNumber]);
+
+  const handleSelect = (type) => {
+    if (selected) return;
+    setSelected(type);
+    setTimeout(() => onAnswer(type), 380);
+  };
+
   return (
-    <div className="qs">
-      <header className="qs__header">
-        <Logo dark />
-        <span className="qs__label">Questionário</span>
+    <div className="app-shell">
+      <header className="qs-header anim-fade-in">
+        <span className="logo-mark">DICA</span>
+        <span className="qs-step">{questionNumber} / {totalQuestions}</span>
       </header>
 
-      <main className="qs__main">
-        <div className="qs__card">
-          <div className="qs__bar">
-            <div className="qs__bar-fill" style={{ width: `${progress}%` }} />
-          </div>
+      <div className="progress-track">
+        <div className="progress-fill" style={{ width: `${progress}%` }} />
+      </div>
 
-          <div className="qs__card-body">
-            <p className="qs__num">Questão {questionNumber} de {totalQuestions}</p>
-            <h2 className="qs__question">Escolha a palavra que melhor descreve você:</h2>
+      <div key={questionNumber} className="anim-fade-up" style={{ flex: 1 }}>
+        <p className="qs-question-sub">Escolha a palavra que melhor descreve você</p>
+        <h2 className="qs-question">Como você se vê agindo?</h2>
 
-            <div className="qs__options">
-              {question.map((opt, i) => (
-                <button key={i} className="qs__option" onClick={() => onAnswer(opt.type)}>
-                  <span className="qs__icon-box">{icons[opt.type]}</span>
-                  <span className="qs__option-label">{opt.text}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="option-list" style={{ marginTop: '2rem' }}>
+          {question.map((opt, idx) => {
+            const letters = ['A', 'B', 'C', 'D'];
+            const isSelected = selected === opt.type;
+            return (
+              <div
+                key={opt.type}
+                className={`option-card${isSelected ? ' is-selected' : ''}`}
+                onClick={() => handleSelect(opt.type)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && handleSelect(opt.type)}
+              >
+                <div className="option-badge">{letters[idx]}</div>
+                <span style={{ fontSize: '1.05rem' }}>{opt.text}</span>
+              </div>
+            );
+          })}
         </div>
-      </main>
+      </div>
+
+      <div className="qs-footer anim-fade-in">
+        <button
+          className="btn-ghost"
+          onClick={onPrevious}
+          style={{
+            opacity: questionNumber > 1 ? 1 : 0,
+            pointerEvents: questionNumber > 1 ? 'auto' : 'none',
+            display: 'flex', alignItems: 'center', gap: '0.4rem',
+            transition: 'opacity 0.2s',
+          }}
+        >
+          ← Questão anterior
+        </button>
+      </div>
     </div>
   );
 }

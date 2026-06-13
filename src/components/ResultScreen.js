@@ -1,219 +1,157 @@
-import React from 'react';
-import { Logo } from './Logo';
-
-const PROFILES = {
-  D: { label: 'Dominante', color: '#3b82f6' },
-  I: { label: 'Influente',  color: '#f97316' },
-  A: { label: 'Estável',    color: '#3b82f6' },
-  C: { label: 'Analítico',  color: '#ef4444' },
-};
-
-// Distinct colors for each dimension (matching stitch)
-const COLORS = {
-  D: '#60a5fa',  // blue
-  I: '#fb923c',  // orange
-  A: '#60a5fa',  // blue (estável)
-  C: '#f87171',  // red/pink
-};
+import React, { useState, useEffect, useRef } from 'react';
 
 const ORDER = ['D', 'I', 'A', 'C'];
 
-const SUMMARIES = {
-  D: 'Seu perfil indica uma forte inclinação para traços Dominantes e Influentes. Você provavelmente prospera em ambientes sociais e é rápido para agir. Equilibrar isso com aspectos Estáveis e Analíticos poderia melhorar o planejamento estratégico.',
-  I: 'Seu perfil indica forte inclinação para traços Influentes e Dominantes. Você prospera em ambientes sociais e é rápido para agir. Equilibrar com aspectos Estáveis e Analíticos pode melhorar o planejamento estratégico.',
-  A: 'Seu perfil indica forte inclinação para traços Estáveis e Cautelosos. Você é uma âncora essencial em qualquer equipe, trazendo consistência e empatia. Desenvolver aspectos Dominantes pode ampliar sua liderança.',
-  C: 'Seu perfil indica forte inclinação para traços Analíticos e Cautelosos. Você é detalhista, preciso e orientado à qualidade. Equilibrar com aspectos Influentes pode melhorar sua comunicação e influência.',
+const DISC_META = {
+  D: { label: 'Dominante',  color: '#b85c38' },
+  I: { label: 'Influente',  color: '#c07a3a' },
+  A: { label: 'Estável',    color: '#7a8c6a' },
+  C: { label: 'Analítico',  color: '#5a6e8c' },
 };
 
-const barColors = {
-  D: '#22c55e',
-  I: '#f97316',
-  A: '#3b82f6',
-  C: '#ef4444',
+const PROFILES = {
+  D: {
+    title: 'O Executor',
+    subtitle: 'Focado, direto e orientado a resultados.',
+    description:
+      'Você valoriza a ação acima de tudo. Quando um desafio surge, sua inclinação é tomar as rédeas e resolver. Essa determinação inspira confiança e move equipes — mas lembre-se de que pausas estratégicas também fazem parte de uma boa execução.',
+  },
+  I: {
+    title: 'O Comunicador',
+    subtitle: 'Carismático, persuasivo e empático.',
+    description:
+      'As pessoas são o seu combustível. Você tem habilidade natural para engajar times, contar histórias e criar ambientes positivos. Sua energia é contagiante. O maior desafio: manter o foco nas entregas técnicas sem perder o entusiasmo.',
+  },
+  A: {
+    title: 'O Colaborador',
+    subtitle: 'Calmo, observador e harmonioso.',
+    description:
+      'Você é o ponto de equilíbrio nos ambientes em que atua. Prefere estabilidade, sabe ouvir de verdade e se preocupa com o bem-estar coletivo. Às vezes, impor a sua voz é necessário para que suas ótimas ideias ganhem o mundo.',
+  },
+  C: {
+    title: 'O Analista',
+    subtitle: 'Preciso, detalhista e metódico.',
+    description:
+      'Nada escapa aos seus olhos. Você decide com base em dados, evita riscos desnecessários e entrega trabalho com padrão altíssimo. O próximo passo: aprender a agir mesmo sem 100% das informações — a ambiguidade também é território fértil.',
+  },
 };
 
-const barIcons = {
-  D: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
-    </svg>
-  ),
-  I: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 4H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3l3 3 3-3h3a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
-    </svg>
-  ),
-  A: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/>
-      <circle cx="12" cy="9" r="2.5"/>
-    </svg>
-  ),
-  C: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-    </svg>
-  ),
-};
+/* ── Radar chart ──────────────────────────────────────── */
+function RadarChart({ values }) {
+  const SIZE = 340, CX = SIZE / 2, CY = SIZE / 2, R = 110;
+  const rings = [0.25, 0.5, 0.75, 1];
+  /* axes: D=top, I=right, A=bottom, C=left */
+  const angles = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
 
-/* ── Radar chart — circular grid, gradient-blended fill ── */
-function RadarChart({ answers }) {
-  const cx = 210, cy = 195, r = 130;
-  const total = ORDER.reduce((s, k) => s + answers[k], 0) || 1;
+  const [t, setT] = useState(0);
+  const rafRef = useRef(null);
 
-  // Axes: D=top(270°), I=right(0°), A=bottom(90°), C=left(180°)
-  const axis = (k, scale = 1) => {
-    const a = { D: -Math.PI/2, I: 0, A: Math.PI/2, C: Math.PI }[k];
-    return { x: cx + r * scale * Math.cos(a), y: cy + r * scale * Math.sin(a) };
+  useEffect(() => {
+    let start = null;
+    const dur = 1100;
+    const ease = (x) => 1 - Math.pow(1 - x, 3);
+    const tick = (ts) => {
+      if (start === null) start = ts;
+      const p = Math.min((ts - start) / dur, 1);
+      setT(ease(p));
+      if (p < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const pt = (val, ai) => {
+    const r = R * (val / 100) * t;
+    return [CX + r * Math.cos(angles[ai]), CY + r * Math.sin(angles[ai])];
   };
 
-  const pct = (k) => answers[k] / total;
-  const dp  = (k) => axis(k, pct(k));
+  const labelOffset = R + 32;
+  const labelPos = (ai) => [
+    CX + labelOffset * Math.cos(angles[ai]),
+    CY + labelOffset * Math.sin(angles[ai]),
+  ];
+  const textAnchor = (ai) => (ai === 1 ? 'start' : ai === 3 ? 'end' : 'middle');
 
-  // Circular grid rings
-  const rings = [0.2, 0.4, 0.6, 0.8, 1.0];
-
-  // Data polygon points
-  const polyPts = ORDER.map(k => { const p = dp(k); return `${p.x},${p.y}`; }).join(' ');
-
-  // Four colored triangles for fill — higher opacity for richer look
-  const triangles = ORDER.map((k, i) => {
-    const kNext = ORDER[(i + 1) % 4];
-    const p1 = dp(k), p2 = dp(kNext);
-    return {
-      key: k,
-      color: COLORS[k],
-      pts: `${cx},${cy} ${p1.x},${p1.y} ${p2.x},${p2.y}`,
-    };
+  /* 4 colored triangles: center → vertex[i] → vertex[i+1] */
+  const triangles = ORDER.map((key, i) => {
+    const next = (i + 1) % ORDER.length;
+    const [x1, y1] = pt(values[i], i);
+    const [x2, y2] = pt(values[next], next);
+    return { key, color: DISC_META[key].color, pts: `${CX},${CY} ${x1},${y1} ${x2},${y2}` };
   });
 
-  // Badge positions: always pushed outward beyond data point along axis direction
-  const badgePos = (k) => {
-    const minR = 0.42 * r; // minimum distance from center
-    const dataR = pct(k) * r;
-    const badgeR = Math.max(dataR, minR) + 22;
-    return axis(k, badgeR / r);
-  };
-
-  // Axis label positions (outside chart area)
-  const labelPos = {
-    D: { x: cx,         y: cy - r - 16, anchor: 'middle' },
-    I: { x: cx + r + 16, y: cy + 5,    anchor: 'start'  },
-    A: { x: cx,         y: cy + r + 22, anchor: 'middle' },
-    C: { x: cx - r - 16, y: cy + 5,    anchor: 'end'    },
-  };
+  /* colored edge segments between adjacent vertices */
+  const edges = ORDER.map((key, i) => {
+    const next = (i + 1) % ORDER.length;
+    const [x1, y1] = pt(values[i], i);
+    const [x2, y2] = pt(values[next], next);
+    return { key, color: DISC_META[key].color, x1, y1, x2, y2 };
+  });
 
   return (
-    <svg className="rs__radar" viewBox="0 0 420 390" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        {/* Soft radial glow at center */}
-        <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="white" stopOpacity="0.6"/>
-          <stop offset="100%" stopColor="white" stopOpacity="0"/>
-        </radialGradient>
-      </defs>
-
-      {/* Circular grid rings */}
-      {rings.map(t => (
-        <circle
-          key={t}
-          cx={cx} cy={cy}
-          r={r * t}
-          fill="none"
-          stroke="#d1d5db"
-          strokeWidth={t === 1 ? 1.5 : 0.8}
-        />
-      ))}
-
-      {/* Axis lines from center to edge */}
-      {ORDER.map(k => {
-        const end = axis(k, 1);
+    <svg
+      className="radar-svg"
+      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Grid rings */}
+      {rings.map((ring) => {
+        const pts = angles
+          .map((a) => [CX + R * ring * Math.cos(a), CY + R * ring * Math.sin(a)].join(','))
+          .join(' ');
         return (
-          <line key={k}
-            x1={cx} y1={cy}
-            x2={end.x} y2={end.y}
-            stroke="#d1d5db" strokeWidth="0.8"
+          <polygon
+            key={ring}
+            points={pts}
+            fill="none"
+            stroke="var(--border)"
+            strokeWidth={ring === 1 ? 1.5 : 0.75}
           />
         );
       })}
 
-      {/* Colored triangle fills — blend creates gradient effect */}
-      {triangles.map(t => (
-        <polygon
-          key={t.key}
-          points={t.pts}
-          fill={t.color}
-          fillOpacity="0.32"
-          stroke="none"
+      {/* Axis lines */}
+      {angles.map((a, i) => (
+        <line
+          key={i}
+          x1={CX} y1={CY}
+          x2={CX + R * Math.cos(a)} y2={CY + R * Math.sin(a)}
+          stroke="var(--border)"
+          strokeWidth="0.75"
         />
       ))}
 
-      {/* Main data polygon — filled with semi-transparent blend */}
-      <polygon
-        points={polyPts}
-        fill="rgba(99,155,235,0.12)"
-        stroke="none"
-      />
+      {/* Colored triangle fills per segment */}
+      {triangles.map(({ key, color, pts }) => (
+        <polygon key={key} points={pts} fill={color} fillOpacity="0.18" stroke="none" />
+      ))}
 
-      {/* Polygon outline strokes per segment for color continuity */}
-      {ORDER.map((k, i) => {
-        const kNext = ORDER[(i + 1) % 4];
-        const p1 = dp(k), p2 = dp(kNext);
-        return (
-          <line key={k}
-            x1={p1.x} y1={p1.y}
-            x2={p2.x} y2={p2.y}
-            stroke={COLORS[k]}
-            strokeWidth="2"
-            strokeLinejoin="round"
-          />
-        );
-      })}
+      {/* Colored edge strokes between vertices */}
+      {edges.map(({ key, color, x1, y1, x2, y2 }) => (
+        <line key={key} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth="2" strokeLinecap="round" />
+      ))}
 
-      {/* Center glow overlay */}
-      <circle cx={cx} cy={cy} r={r * 0.5} fill="url(#centerGlow)" />
-
-      {/* % badge at each data point */}
-      {ORDER.map(k => {
-        const bp = badgePos(k);
-        const val = Math.round(pct(k) * 100);
-        const w = val >= 100 ? 40 : 34;
-        return (
-          <g key={k}>
-            <rect
-              x={bp.x - w/2} y={bp.y - 10}
-              width={w} height="20"
-              rx="10"
-              fill={COLORS[k]}
-            />
-            <text
-              x={bp.x} y={bp.y + 4.5}
-              textAnchor="middle"
-              fontSize="10.5"
-              fontFamily="Inter,sans-serif"
-              fontWeight="700"
-              fill="white"
-            >
-              {val}%
-            </text>
-          </g>
-        );
+      {/* Colored vertex dots */}
+      {values.map((v, i) => {
+        const [vx, vy] = pt(v, i);
+        return <circle key={i} cx={vx} cy={vy} r="4" fill={DISC_META[ORDER[i]].color} />;
       })}
 
       {/* Axis labels */}
-      {ORDER.map(k => {
-        const lp = labelPos[k];
+      {ORDER.map((key, i) => {
+        const [lx, ly] = labelPos(i);
         return (
           <text
-            key={k}
-            x={lp.x} y={lp.y}
-            textAnchor={lp.anchor}
+            key={key}
+            x={lx} y={ly}
+            textAnchor={textAnchor(i)}
+            dy="0.35em"
             fontSize="12"
-            fontFamily="Inter,sans-serif"
-            fontWeight="600"
-            fill="#475569"
+            fontWeight="500"
+            fill="var(--muted)"
+            fontFamily="var(--font-body)"
           >
-            {PROFILES[k].label}
+            {DISC_META[key].label}
           </text>
         );
       })}
@@ -221,77 +159,77 @@ function RadarChart({ answers }) {
   );
 }
 
-/* ── Main component ───────────────────────────────── */
+/* ── Main component ──────────────────────────────────── */
 function ResultScreen({ answers, onReset }) {
   const total = ORDER.reduce((s, k) => s + answers[k], 0) || 1;
-  const dominant = ORDER.reduce((best, k) => answers[k] > answers[best] ? k : best, 'D');
+  const maxScore = Math.max(...ORDER.map((k) => answers[k]));
+  const dominants = ORDER.filter((k) => answers[k] === maxScore);
+  const dominant = dominants[0];
+  const profile = PROFILES[dominant];
+
+  const radarValues = ORDER.map((k) => Math.round((answers[k] / total) * 100));
 
   return (
-    <div className="rs">
-      <div className="rs__blob1" />
-      <div className="rs__blob2" />
-
-      <header className="rs__header">
-        <Logo dark />
+    <div className="app-shell">
+      <header className="rs-header anim-fade-in">
+        <span className="logo-mark">DICA</span>
+        <button className="btn-ghost" onClick={onReset}>Refazer avaliação</button>
       </header>
 
-      <main className="rs__main">
-        <h1 className="rs__title">Painel de Resultados do Perfil Comportamental</h1>
-
-        <div className="rs__grid">
-          {/* Left: radar in a white card */}
-          <div className="rs__chart-card">
-            <h3>Seu Diagrama Comportamental</h3>
-            <div className="rs__chart-wrap">
-              <RadarChart answers={answers} />
-            </div>
-          </div>
-
-          {/* Right: summary + bars */}
-          <div className="rs__summary-col">
-            <h3>Resumo do Perfil</h3>
-            <p className="rs__summary-text">{SUMMARIES[dominant]}</p>
-
-            <div className="rs__bars">
-              {ORDER.map(k => {
-                const pct = Math.round((answers[k] / total) * 100);
-                const color = barColors[k];
-                return (
-                  <div key={k} className="rs__bar">
-                    <div className="rs__bar-icon" style={{ background: color }}>
-                      {barIcons[k]}
-                    </div>
-                    <div className="rs__bar-content">
-                      <div className="rs__bar-head">
-                        <span className="rs__bar-name">{PROFILES[k].label}</span>
-                        <span className="rs__bar-pct">{pct}%</span>
-                      </div>
-                      <div className="rs__bar-track">
-                        <div className="rs__bar-fill" style={{ width: `${pct}%`, background: color }} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+      <div className="report-card anim-slide-up">
+        <p className="report-card__eyebrow">Resultado da Avaliação</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+          <h1 className="report-card__title" style={{ margin: 0 }}>
+            {dominants.length > 1 ? 'Perfil Combinado' : profile.title}
+          </h1>
+          <div style={{ display: 'flex', gap: '0.4rem' }}>
+            {dominants.map((key) => (
+              <span key={key} style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '2.75rem', height: '2.75rem', borderRadius: '50%',
+                background: DISC_META[key].color, color: '#fff',
+                fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.35rem',
+                flexShrink: 0, letterSpacing: '-0.01em',
+              }}>{key}</span>
+            ))}
           </div>
         </div>
+        <p className="report-card__subtitle">
+          {dominants.length > 1
+            ? dominants.map((k) => DISC_META[k].label).join(' · ')
+            : profile.subtitle}
+        </p>
+        <p className="report-card__desc">
+          {dominants.length > 1
+            ? dominants.map((k) => PROFILES[k].description).join(' ')
+            : profile.description}
+        </p>
 
-        <div className="rs__actions">
-          <button className="rs__btn-primary" onClick={() => window.print()}>
-            Baixar Relatório Completo
-          </button>
-          <button className="rs__btn-secondary" onClick={onReset}>
-            Refazer Avaliação
-          </button>
+        <hr className="report-card__divider" />
+
+        <p className="report-card__section-label">Mapa Comportamental DISC</p>
+
+        <div className="radar-wrap">
+          <RadarChart values={radarValues} />
         </div>
-      </main>
 
-      <footer className="rs__footer">
-        © 2024 ProfileInsight. Todos os direitos reservados. &nbsp;
-        <a href="#privacidade">Política de Privacidade</a>&nbsp;|&nbsp;
-        <a href="#termos">Termos de Serviço</a>
-      </footer>
+        <div className="disc-legend">
+          {ORDER.map((key, i) => (
+            <div className="disc-legend-row" key={key}>
+              <span className="disc-legend-dot" style={{ background: DISC_META[key].color }} />
+              <span className="disc-legend-label">{DISC_META[key].label}</span>
+              <span className="disc-legend-val">{radarValues[i]}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rs-actions anim-slide-up" style={{ animationDelay: '0.25s' }}>
+        <button className="btn-primary" onClick={() => window.print()}>
+          Baixar Relatório PDF
+        </button>
+        <button className="btn-secondary" onClick={onReset}>Voltar ao Início</button>
+      </div>
     </div>
   );
 }
